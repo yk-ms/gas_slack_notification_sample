@@ -1,5 +1,5 @@
 function doPost(e) {
-  var token = ""; //slackのトークン
+  var url = 'slack_webhook_url';
   var channel = "gas"; //投稿先チャンネル名
   var username = "testbot"; //BOTの名前
   var json = e.postData.getDataAsString();
@@ -7,10 +7,24 @@ function doPost(e) {
   var action = payload.action;
   if (action === 'labeled') {
     var labelName = payload.label.name;
-    var url = payload.pull_request.html_url;
-    if (labelName === 'enhancement') {
-      var text = url + ' に「' + labelName + '」がつけられました。レビューお願いします！';
-      UrlFetchApp.fetch("https://slack.com/api/chat.postMessage?token=" + token + "&channel=%23" + channel + "&username=" + username + "&text=" + text);
-    }
+    var pullRequestUrl = payload.pull_request.html_url;
+    var text = pullRequestUrl + ' に' + labelName + 'がつきました';
+    var body = ' @here レビューお願いします！';
+    UrlFetchApp.fetch(url, {
+      method: 'post',
+      payload: {
+        payload: JSON.stringify({
+          username   : username,
+          channe    : channel,
+          attachments: [
+            {
+              text: [ text, body ].join("\n"),
+              mrkdwn_in: ["text"],
+            }
+          ],
+          link_names: 1,
+        }),
+      }
+    });
   }
 }
